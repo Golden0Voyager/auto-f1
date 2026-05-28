@@ -6,6 +6,7 @@ Base URL: https://api.openf1.org/v1
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
 from typing import Any
 
@@ -13,6 +14,8 @@ import httpx
 
 BASE_URL = "https://api.openf1.org/v1"
 TIMEOUT = 15.0
+MAX_RETRIES = 3
+RETRY_DELAY = 1.0  # 秒
 
 
 class OpenF1Client:
@@ -34,10 +37,43 @@ class OpenF1Client:
     # ── Core endpoints ──────────────────────────────────────────────
 
     async def _get(self, path: str, params: dict[str, Any] | None = None) -> list[dict]:
-        """GET request, returns list of dicts."""
-        resp = await self._client.get(path, params=params or {})
-        resp.raise_for_status()
-        return resp.json()
+        """GET request with retry logic for rate limiting."""
+        last_error = None
+        
+        for attempt in range(MAX_RETRIES):
+            try:
+                resp = await self._client.get(path, params=params or {})
+                
+                # 处理速率限制
+                if resp.status_code == 429:
+                    # 获取 Retry-After 头，如果没有则使用默认延迟
+                    retry_after = float(resp.headers.get("Retry-After", RETRY_DELAY))
+                    wait_time = retry_after * (2 ** attempt)  # 指数退避
+                    
+                    if attempt < MAX_RETRIES - 1:
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        resp.raise_for_status()
+                
+                resp.raise_for_status()
+                return resp.json()
+                
+            except httpx.HTTPStatusError as e:
+                last_error = e
+                if e.response.status_code == 429 and attempt < MAX_RETRIES - 1:
+                    wait_time = RETRY_DELAY * (2 ** attempt)
+                    await asyncio.sleep(wait_time)
+                    continue
+                raise
+            except Exception as e:
+                last_error = e
+                raise
+        
+        # 如果所有重试都失败
+        if last_error:
+            raise last_error
+        return []
 
     # Sessions
 
