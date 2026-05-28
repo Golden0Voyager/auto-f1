@@ -1,0 +1,59 @@
+[project]
+name = "auto-f1"
+version = "0.1.0"
+description = "AI-Powered F1 Analysis & Real-time Intelligence — MCP Server + Race Reports"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [
+    { name = "Haining Yu", email = "yhn0535@gmail.com" },
+]
+keywords = ["mcp", "f1", "formula1", "openf1", "fastf1", "telemetry", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "mcp>=1.6.0",
+    "pydantic>=2.0",
+    "httpx>=0.27.0",
+    "fastf1>=3.8.0",
+    "pandas>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Golden0Voyager/auto-f1"
+Repository = "https://github.com/Golden0Voyager/auto-f1"
+Issues = "https://github.com/Golden0Voyager/auto-f1/issues"
+
+[project.scripts]
+auto-f1 = "auto_f1.server:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
