@@ -46,18 +46,18 @@ class OpenF1Client:
 
         Filters: year, country_name, session_type, session_key, etc.
         """
-        return await self._get("/v1/sessions", filters)
+        return await self._get("/sessions", filters)
 
     async def get_current_session(self) -> dict | None:
         """Get the most recent / ongoing session."""
-        sessions = await self._get("/v1/sessions", {"session_key": "latest"})
+        sessions = await self._get("/sessions", {"session_key": "latest"})
         return sessions[0] if sessions else None
 
     # Drivers
 
     async def get_drivers(self, session_key: int | str) -> list[dict]:
         """Get driver list for a session."""
-        return await self._get("/v1/drivers", {"session_key": session_key})
+        return await self._get("/drivers", {"session_key": session_key})
 
     # Positions
 
@@ -66,12 +66,12 @@ class OpenF1Client:
         params: dict[str, Any] = {"session_key": session_key}
         if driver_number is not None:
             params["driver_number"] = driver_number
-        return await self._get("/v1/position", params)
+        return await self._get("/position", params)
 
     async def get_latest_positions(self, session_key: int | str) -> list[dict]:
         """Get latest positions for all drivers in a session."""
         params = {"session_key": session_key}
-        return await self._get("/v1/position", params)
+        return await self._get("/position", params)
 
     # Laps
 
@@ -83,7 +83,7 @@ class OpenF1Client:
         params: dict[str, Any] = {"session_key": session_key}
         if driver_number is not None:
             params["driver_number"] = driver_number
-        return await self._get("/v1/laps", params)
+        return await self._get("/laps", params)
 
     # Car data (telemetry)
 
@@ -103,7 +103,7 @@ class OpenF1Client:
         }
         if speed_min is not None:
             params[f"speed>={speed_min}"] = ""
-        return await self._get("/v1/car_data", params)
+        return await self._get("/car_data", params)
 
     # Stints (tire strategy)
 
@@ -112,7 +112,7 @@ class OpenF1Client:
         params: dict[str, Any] = {"session_key": session_key}
         if driver_number is not None:
             params["driver_number"] = driver_number
-        return await self._get("/v1/stints", params)
+        return await self._get("/stints", params)
 
     # Team radio
 
@@ -121,29 +121,29 @@ class OpenF1Client:
         params: dict[str, Any] = {"session_key": session_key}
         if driver_number is not None:
             params["driver_number"] = driver_number
-        return await self._get("/v1/team_radio", params)
+        return await self._get("/team_radio", params)
 
     # Race control messages
 
     async def get_race_control(self, session_key: int | str) -> list[dict]:
         """Get Race Control messages (flags, safety car, VSC, penalties)."""
-        return await self._get("/v1/race_control", {"session_key": session_key})
+        return await self._get("/race_control", {"session_key": session_key})
 
     # Weather
 
     async def get_weather(self, session_key: int | str) -> list[dict]:
         """Get weather data for a session."""
-        return await self._get("/v1/weather", {"session_key": session_key})
+        return await self._get("/weather", {"session_key": session_key})
 
     # Championship standings
 
     async def get_championship_drivers(self, session_key: int | str = "latest") -> list[dict]:
         """Get driver championship standings."""
-        return await self._get("/v1/championship_drivers", {"session_key": session_key})
+        return await self._get("/championship_drivers", {"session_key": session_key})
 
     async def get_championship_teams(self, session_key: int | str = "latest") -> list[dict]:
         """Get constructor championship standings."""
-        return await self._get("/v1/championship_teams", {"session_key": session_key})
+        return await self._get("/championship_teams", {"session_key": session_key})
 
     # ── Convenience helpers ─────────────────────────────────────────
 
