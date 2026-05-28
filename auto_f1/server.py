@@ -18,7 +18,7 @@ from auto_f1.clients.openf1 import OpenF1Client
 
 logger = logging.getLogger(__name__)
 
-mcp = FastMCP("auto_f1", description="F1 race data, telemetry, standings, and AI analysis")
+mcp = FastMCP("auto_f1", instructions="F1 race data, telemetry, standings, and AI analysis")
 
 
 # ── Helper ──────────────────────────────────────────────────────────
