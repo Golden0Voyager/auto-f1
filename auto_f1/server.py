@@ -47,14 +47,43 @@ async def f1_next_race() -> str:
 async def f1_current_standings() -> str:
     """Get current F1 World Championship standings (drivers + constructors).
 
-    Returns both driver and team championship tables.
+    Returns both driver and team championship tables with full names and team info.
     """
     async with OpenF1Client() as client:
-        drivers = await client.get_championship_drivers()
-        teams = await client.get_championship_teams()
+        # 获取积分榜数据
+        championship_drivers = await client.get_championship_drivers()
+        championship_teams = await client.get_championship_teams()
+        
+        # 获取车手详细信息（使用 latest session）
+        drivers_info = await client.get_drivers("latest")
+        
+        # 创建 driver_number -> driver_info 映射
+        driver_map = {d["driver_number"]: d for d in drivers_info}
+        
+        # 关联积分榜与车手信息
+        drivers_with_info = []
+        for entry in championship_drivers[:20]:
+            driver_num = entry.get("driver_number")
+            driver_info = driver_map.get(driver_num, {})
+            drivers_with_info.append({
+                "position": entry.get("position_current"),
+                "driver_number": driver_num,
+                "driver_name": driver_info.get("full_name", "Unknown"),
+                "team_name": driver_info.get("team_name", "Unknown"),
+                "points": entry.get("points_current", 0),
+                "points_start": entry.get("points_start", 0),
+            })
+        
+        # 按积分排序
+        drivers_with_info.sort(key=lambda x: x["points"], reverse=True)
+        
+        # 重新编号位置
+        for i, d in enumerate(drivers_with_info, 1):
+            d["position"] = i
+        
         return _json({
-            "drivers": drivers[:20],
-            "constructors": teams[:10],
+            "drivers": drivers_with_info,
+            "constructors": championship_teams[:10],
             "updated": datetime.utcnow().isoformat() + "Z",
         })
 
