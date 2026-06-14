@@ -54,3 +54,6 @@ dev = [
 [tool.ruff]
 extend = "~/.config/ruff/ruff.toml"
 target-version = "py311"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

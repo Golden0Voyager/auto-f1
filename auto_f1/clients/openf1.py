@@ -38,17 +38,14 @@ class OpenF1Client:
 
     async def _get(self, path: str, params: dict[str, Any] | None = None) -> list[dict]:
         """GET request with retry logic for rate limiting."""
-        last_error = None
-        
         for attempt in range(MAX_RETRIES):
             try:
                 resp = await self._client.get(path, params=params or {})
                 
                 # 处理速率限制
                 if resp.status_code == 429:
-                    # 获取 Retry-After 头，如果没有则使用默认延迟
                     retry_after = float(resp.headers.get("Retry-After", RETRY_DELAY))
-                    wait_time = retry_after * (2 ** attempt)  # 指数退避
+                    wait_time = retry_after * (2 ** attempt)
                     
                     if attempt < MAX_RETRIES - 1:
                         await asyncio.sleep(wait_time)
@@ -59,21 +56,10 @@ class OpenF1Client:
                 resp.raise_for_status()
                 return resp.json()
                 
-            except httpx.HTTPStatusError as e:
-                last_error = e
-                if e.response.status_code == 429 and attempt < MAX_RETRIES - 1:
-                    wait_time = RETRY_DELAY * (2 ** attempt)
-                    await asyncio.sleep(wait_time)
-                    continue
+            except httpx.HTTPStatusError:
                 raise
-            except Exception as e:
-                last_error = e
+            except Exception:
                 raise
-        
-        # 如果所有重试都失败
-        if last_error:
-            raise last_error
-        return []
 
     # Sessions
 
