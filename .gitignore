@@ -13,5 +13,6 @@ reports/*.md
 .ruff_cache/
 .pytest_cache/
 .mypy_cache/
+.coverage
 *.db
 .DS_Store
