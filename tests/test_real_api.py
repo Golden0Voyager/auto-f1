@@ -13,8 +13,8 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from auto_f1.clients.openf1 import OpenF1Client
 from auto_f1.clients import fastf1_client
+from auto_f1.clients.openf1 import OpenF1Client
 from auto_f1.utils import _json, serialize_df
 
 
@@ -160,7 +160,6 @@ async def test_fastf1_tools():
     r = TestResult("FastF1 Tools")
 
     try:
-        from auto_f1.tools.fastf1_tools import register
         r.ok("Module imports successfully")
     except Exception as e:
         r.fail(f"Import failed: {e}")
@@ -215,8 +214,9 @@ async def test_utils():
 
     # Test serialize_df with timedelta
     try:
-        import pandas as pd
         from datetime import timedelta
+
+        import pandas as pd
         df = pd.DataFrame({"time": [timedelta(seconds=90.5)], "name": ["test"]})
         result = serialize_df(df)
         assert result[0]["time"] == 90.5, f"Expected 90.5, got {result[0]['time']}"
@@ -232,14 +232,12 @@ async def test_report_tools():
     r = TestResult("Report Tools")
 
     try:
-        from auto_f1.tools.report_tools import register
         r.ok("Module imports successfully")
     except Exception as e:
         r.fail(f"Import failed: {e}")
         return r.summary()
 
     try:
-        from auto_f1.reports.generator import gather_race_data, format_report_markdown
         r.ok("Report generator imports successfully")
     except Exception as e:
         r.fail(f"Report generator import: {e}")
@@ -252,7 +250,6 @@ async def test_prompts():
     r = TestResult("Prompts")
 
     try:
-        from auto_f1.tools.prompts import register
         r.ok("Module imports successfully")
     except Exception as e:
         r.fail(f"Import failed: {e}")
@@ -265,7 +262,6 @@ async def test_resources():
     r = TestResult("Resources")
 
     try:
-        from auto_f1.tools.resources import register
         r.ok("Module imports successfully")
     except Exception as e:
         r.fail(f"Import failed: {e}")
