@@ -1,4 +1,4 @@
-"""MCP Prompts — structured prompts for F1 analysis."""
+"""F1 analysis tools — race analysis and report generation."""
 
 from __future__ import annotations
 
@@ -12,14 +12,15 @@ from auto_f1.utils import _json
 
 
 def register(mcp: FastMCP) -> None:
-    """Register MCP prompts on the given server instance."""
+    """Register analysis tools on the given server instance."""
 
-    @mcp.prompt(
-        name="race_analysis",
-        description="Generate a structured prompt for AI-powered F1 race analysis",
-    )
-    async def race_analysis(session_key: int) -> list[dict]:
-        """Gather race data and return analysis prompt messages."""
+    @mcp.tool()
+    async def f1_race_analysis(session_key: int) -> str:
+        """Generate a structured analysis of F1 race data.
+        Gathers positions, stints, race control events, and weather data for analysis.
+        Args:
+            session_key: OpenF1 session key.
+        """
         async with OpenF1Client() as client:
             positions_task = client.get_positions(session_key)
             stints_task = client.get_stints(session_key)
@@ -43,7 +44,7 @@ def register(mcp: FastMCP) -> None:
         for p in positions:
             latest_pos[p["driver_number"]] = p
 
-        stint_summary = {}
+        stint_summary: dict[int, list[dict]] = {}
         for s in stints:
             drv = s["driver_number"]
             stint_summary.setdefault(drv, []).append({
@@ -68,37 +69,28 @@ def register(mcp: FastMCP) -> None:
             "weather": weather[:3] if weather else [],
         }
 
-        return [
-            {
-                "role": "user",
-                "content": (
-                    f"Analyze this F1 race data:\n\n{_json(data)}\n\n"
-                    "Provide a comprehensive race analysis in Chinese. Cover:\n"
-                    "1) Race winner and podium analysis\n"
-                    "2) Key overtakes and position changes\n"
-                    "3) Tire strategy effectiveness\n"
-                    "4) Safety car / flag impact\n"
-                    "5) Standout performances (driver of the day)\n"
-                    "6) Championship implications"
-                ),
-            }
-        ]
+        return (
+            f"Analyze this F1 race data:\n\n{_json(data)}\n\n"
+            "Provide a comprehensive race analysis in Chinese. Cover:\n"
+            "1) Race winner and podium analysis\n"
+            "2) Key overtakes and position changes\n"
+            "3) Tire strategy effectiveness\n"
+            "4) Safety car / flag impact\n"
+            "5) Standout performances (driver of the day)\n"
+            "6) Championship implications"
+        )
 
-    @mcp.prompt(
-        name="race_report",
-        description="Generate a full Markdown race report as a prompt",
-    )
-    async def race_report(session_key: int) -> list[dict]:
-        """Gather race data and return a formatted report prompt."""
+    @mcp.tool()
+    async def f1_race_report(session_key: int) -> str:
+        """Generate a full Markdown race report for review and enhancement.
+        Gathers all race data and formats it as a structured Markdown report.
+        Args:
+            session_key: OpenF1 session key.
+        """
         data = await gather_race_data(session_key)
         report = format_report_markdown(data)
 
-        return [
-            {
-                "role": "user",
-                "content": (
-                    f"Review and enhance this F1 race report:\n\n{report}\n\n"
-                    "Add detailed analysis, driver insights, and strategic commentary."
-                ),
-            }
-        ]
+        return (
+            f"Review and enhance this F1 race report:\n\n{report}\n\n"
+            "Add detailed analysis, driver insights, and strategic commentary."
+        )
