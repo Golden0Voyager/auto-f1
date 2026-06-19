@@ -70,10 +70,7 @@ def get_telemetry(year: int, gp: str | int, driver: str, lap: int = 0) -> pd.Dat
     """
     session = get_session(year, gp, "R")
     driver_laps = session.laps.pick_driver(driver)
-    if lap == 0:
-        fastest = driver_laps.pick_fastest()
-    else:
-        fastest = driver_laps[driver_laps["LapNumber"] == lap].iloc[0]
+    fastest = driver_laps.pick_fastest() if lap == 0 else driver_laps[driver_laps["LapNumber"] == lap].iloc[0]
     return fastest.get_telemetry()
 
 
