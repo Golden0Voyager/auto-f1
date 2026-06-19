@@ -41,25 +41,26 @@ class OpenF1Client:
         for attempt in range(MAX_RETRIES):
             try:
                 resp = await self._client.get(path, params=params or {})
-                
+
                 # 处理速率限制
                 if resp.status_code == 429:
                     retry_after = float(resp.headers.get("Retry-After", RETRY_DELAY))
                     wait_time = retry_after * (2 ** attempt)
-                    
+
                     if attempt < MAX_RETRIES - 1:
                         await asyncio.sleep(wait_time)
                         continue
                     else:
                         resp.raise_for_status()
-                
+
                 resp.raise_for_status()
                 return resp.json()
-                
+
             except httpx.HTTPStatusError:
                 raise
             except Exception:
                 raise
+        raise RuntimeError("All retry attempts exhausted")  # pragma: no cover
 
     # Sessions
 
