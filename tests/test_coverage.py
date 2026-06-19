@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import tempfile
 from datetime import datetime, timedelta
@@ -12,7 +13,6 @@ import pandas as pd
 import pytest
 
 from auto_f1.utils import _json, serialize_df
-
 
 # ─────────────────────── Helpers ───────────────────────
 
@@ -178,8 +178,9 @@ class TestOpenF1Client:
                 assert await client._get("/test") == [{"retried": True}]
 
     async def test_get_429_all_retries_exhausted(self):
-        from auto_f1.clients.openf1 import OpenF1Client
         from httpx import HTTPStatusError, Request, Response
+
+        from auto_f1.clients.openf1 import OpenF1Client
 
         async with OpenF1Client() as client:
             resp = MagicMock(status_code=429, headers={})
@@ -187,16 +188,20 @@ class TestOpenF1Client:
             resp.raise_for_status.side_effect = HTTPStatusError(
                 message="429", request=req, response=Response(status_code=429, request=req)
             )
-            with patch.object(client._client, "get", new_callable=AsyncMock, return_value=resp):
-                with pytest.raises(HTTPStatusError):
-                    await client._get("/test")
+            with (
+                patch.object(client._client, "get", new_callable=AsyncMock, return_value=resp),
+                pytest.raises(HTTPStatusError),
+            ):
+                await client._get("/test")
 
     async def test_get_http_error(self):
+        from httpx import HTTPStatusError
+
         from auto_f1.clients.openf1 import OpenF1Client
 
         async with OpenF1Client() as client:
             with patch.object(client._client, "get", new_callable=AsyncMock, return_value=_mock_response(None, 500)):
-                with pytest.raises(Exception):
+                with pytest.raises(HTTPStatusError):
                     await client._get("/test")
 
     async def test_get_exception_propagates(self):
@@ -367,7 +372,7 @@ class TestFastF1Client:
     )
     @patch("auto_f1.clients.fastf1_client.get_session")
     def test_session_attr_returns(self, mock_gs, fn_name, attr, data):
-        from auto_f1.clients.fastf1_client import get_race_results, get_laps, get_weather_data
+        from auto_f1.clients.fastf1_client import get_laps, get_race_results, get_weather_data
 
         fn = {"get_race_results": get_race_results, "get_laps": get_laps, "get_weather_data": get_weather_data}[fn_name]
         session = MagicMock()
@@ -510,7 +515,7 @@ class TestFormatReportMarkdown:
         data = _make_race_data()
         data["final_positions"] = [{"driver_number": i, "position": i} for i in range(25)]
         report = format_report_markdown(data)
-        rows = [l for l in report.split("\n") if l.startswith("|") and l.split("|")[1].strip().isdigit()]
+        rows = [line for line in report.split("\n") if line.startswith("|") and line.split("|")[1].strip().isdigit()]
         assert len(rows) == 20
 
     def test_no_best_lap(self):
@@ -732,14 +737,14 @@ class TestReportTools:
 
 
 @pytest.mark.asyncio
-class TestPrompts:
-    def _make(self, prompt_name):
+class TestAnalysisTools:
+    def _make(self, tool_name):
         from auto_f1.tools import prompts
 
-        return _get_prompt_fn(_make_mcp(prompts), prompt_name)
+        return _get_tool_fn(_make_mcp(prompts), tool_name)
 
-    async def test_race_analysis(self):
-        fn = self._make("race_analysis")
+    async def test_f1_race_analysis(self):
+        fn = self._make("f1_race_analysis")
         mock_client = _mock_openf1_client(
             get_positions=[{"driver_number": 1, "position": 1}],
             get_stints=[{"driver_number": 1, "compound": "Soft", "lap_start": 1, "lap_end": 20, "tyre_age_at_start": 0}],
@@ -751,13 +756,13 @@ class TestPrompts:
             cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
             cls.return_value.__aexit__ = AsyncMock(return_value=False)
             result = await fn(123)
-        assert len(result) == 1 and result[0]["role"] == "user" and "race" in result[0]["content"].lower()
+        assert isinstance(result, str) and "race" in result.lower()
 
-    async def test_race_report(self):
-        fn = self._make("race_report")
+    async def test_f1_race_report(self):
+        fn = self._make("f1_race_report")
         with patch("auto_f1.tools.prompts.gather_race_data", new_callable=AsyncMock, return_value=_make_race_data()):
             result = await fn(123)
-        assert len(result) == 1 and "report" in result[0]["content"].lower()
+        assert isinstance(result, str) and "report" in result.lower()
 
 
 # ─────────────────────── Resources ───────────────────────
