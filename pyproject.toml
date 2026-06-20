@@ -74,3 +74,6 @@ source = ["auto_f1"]
 [tool.coverage.report]
 fail_under = 85
 show_missing = true
+
+[tool.bandit]
+skips = ["B101", "B311", "B404", "B603"]
