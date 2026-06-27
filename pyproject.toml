@@ -67,6 +67,7 @@ asyncio_mode = "auto"
 
 [tool.mypy]
 ignore_missing_imports = true
+files = ["auto_f1/"]
 
 [tool.coverage.run]
 source = ["auto_f1"]
