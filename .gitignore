@@ -16,3 +16,6 @@ reports/*.md
 .coverage
 *.db
 .DS_Store
+
+# Coverage
+htmlcov/
