@@ -24,8 +24,12 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
+      # `--locked` makes the committed uv.lock authoritative. Plain `uv sync`
+      # silently re-locks when pyproject.toml and uv.lock drift, so CI could
+      # install versions nobody committed while the audit gate's `uv export
+      # --frozen` then read that rewritten lock instead of the repo's.
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --dev --locked
 
       - name: Run ruff check
         run: uv run ruff check auto_f1/ tests/
