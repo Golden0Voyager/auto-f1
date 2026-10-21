@@ -54,6 +54,12 @@ dev = [
     "mypy>=1.10.0",
 ]
 
+# Single source of truth for the uv version: setup-uv reads this when the
+# workflow sets no `version:`, and a local uv that does not match refuses to
+# run here with an actionable message.
+[tool.uv]
+required-version = "==0.13.4"
+
 [tool.ruff]
 target-version = "py312"
 line-length = 120
