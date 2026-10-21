@@ -16,6 +16,10 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          # Pin explicitly: `@v5` alone floats to whatever uv is current, so
+          # the `uv export` contract the audit gate depends on can drift.
+          version: "0.13.4"
 
       - name: Set up Python
         run: uv python install 3.12
@@ -28,8 +32,13 @@ jobs:
 
       - name: Run mypy
         run: uv run mypy auto_f1/ || true
+
+      # bandit only honors `[tool.bandit]` when told to read pyproject.toml, and
+      # parsing TOML requires the `toml` extra. Without both, the skip list was
+      # silently inert. This is a security gate, so no `|| true`: a finding
+      # must fail the build.
       - name: Run security scan (bandit)
-        run: uv tool run bandit -r auto_f1/ || true
+        run: uv tool run --from 'bandit[toml]==1.9.4' bandit -c pyproject.toml -r auto_f1/
 
       # `uv audit` is not a subcommand of uv: this step errored on every run and
       # `|| true` turned that into a green tick, so nothing was ever audited.
